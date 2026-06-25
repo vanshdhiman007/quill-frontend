@@ -29,36 +29,45 @@
 </head>
 <body class="font-sans antialiased text-sm">
 
-   <div id="auth-guard-overlay" class="fixed inset-0 bg-zinc-950 z-[200] flex items-center justify-center overflow-y-auto py-8">
+  <div id="auth-guard-overlay" class="fixed inset-0 bg-zinc-950 z-[200] flex items-center justify-center overflow-y-auto py-8">
     <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-sm w-full shadow-2xl">
-        <h2 class="text-xl font-semibold font-serif mb-2 text-white">Welcome to Quill</h2>
-        <p class="text-zinc-500 text-xs mb-6">Create a free account or log in to manage your AI sessions.</p>
+        <h2 class="text-xl font-semibold font-serif mb-1 text-white">Welcome to Quill</h2>
+        <p class="text-zinc-500 text-xs mb-6">Enter your mobile number to receive a secure login verification code.</p>
         
-        <div class="space-y-3 mb-4">
-            <input id="auth-email" type="email" placeholder="Email Address" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white">
-            <input id="auth-password" type="password" placeholder="Account Password" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white">
-            
-            <div class="flex gap-2 pt-1">
-                <button onclick="handleAccountLogin()" class="flex-1 bg-white text-black font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-200 transition-colors">Log In</button>
-                <button onclick="handleAccountRegistration()" class="flex-1 bg-zinc-800 text-zinc-200 border border-zinc-700 font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-700 transition-colors">Sign Up</button>
+        <div id="phone-input-step" class="space-y-4">
+            <div>
+                <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1.5">Mobile Number</label>
+                <input id="auth-phone" type="tel" placeholder="+1234567890" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white font-mono">
+                <span class="text-[10px] text-zinc-600 block mt-1">Include country code prefix (e.g., +1 or +91)</span>
+            </div>
+            <button onclick="requestSmsOtpToken()" class="w-full bg-white text-black font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-200 transition-colors shadow-md flex items-center justify-center gap-1.5">
+                Send Verification Code
+            </button>
+        </div>
+
+        <div id="otp-verify-step" class="space-y-4 hidden animate-in fade-in duration-300">
+            <div>
+                <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-1.5">Enter 6-Digit Code</label>
+                <input id="auth-otp-token" type="text" maxlength="6" placeholder="000000" class="w-full bg-zinc-950 border border-zinc-800 text-lg rounded-lg p-2.5 outline-none focus:border-zinc-500 text-white font-mono tracking-[0.5em] text-center">
+            </div>
+            <div class="flex gap-2">
+                <button onclick="changePhoneNumberBack()" class="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-lg text-xs transition-colors">Back</button>
+                <button onclick="verifySmsOtpToken()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs py-2.5 transition-colors shadow">Verify & Login</button>
             </div>
         </div>
 
-        <div class="relative flex py-3 items-center">
-            <div class="flex-grow border-t border-zinc-800"></div>
-            <span class="flex-shrink mx-4 text-zinc-600 text-[10px] uppercase font-bold tracking-widest">Or continue with</span>
-            <div class="flex-grow border-t border-zinc-800"></div>
+        <div class="relative flex py-3 items-center mt-4">
+            <div class="flex-grow border-t border-zinc-800/80"></div>
+            <span class="flex-shrink mx-3 text-zinc-600 text-[9px] uppercase font-bold tracking-widest">Social login</span>
+            <div class="flex-grow border-t border-zinc-800/80"></div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2.5 mt-2">
-            <button onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-300" title="Sign in with Google">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.113-5.136 4.113A5.44 5.44 0 0 1 8.56 13.08a5.44 5.44 0 0 1 5.432-5.433c2.274 0 4.193 1.226 5.099 3.03l3.69-1.536C21.21 5.562 17.001 3 13.992 3c-5.523 0-10 4.477-10 10s4.477 10 10 10c5.514 0 10-4.486 10-10 0-.743-.1-1.46-.285-2.143l-11.467.028z"/></svg>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+            <button onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 gap-2 text-xs">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.113-5.136 4.113A5.44 5.44 0 0 1 8.56 13.08a5.44 5.44 0 0 1 5.432-5.433c2.274 0 4.193 1.226 5.099 3.03l3.69-1.536C21.21 5.562 17.001 3 13.992 3c-5.523 0-10 4.477-10 10s4.477 10 10 10c5.514 0 10-4.486 10-10 0-.743-.1-1.46-.285-2.143l-11.467.028z"/></svg> Google
             </button>
-            <button onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-300" title="Sign in with GitHub">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.082.822-.26.822-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.241-1.305.408-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.22.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
-            </button>
-            <button onclick="handleSocialLogin('facebook')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-300" title="Sign in with Facebook">
-                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            <button onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 gap-2 text-xs">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.082.822-.26.822-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.241-1.305.408-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.22.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> GitHub
             </button>
         </div>
 
@@ -128,6 +137,64 @@
     </div>
 
     <script>
+        // A. ASYNC TASK: Ask Supabase to fire an SMS OTP text out to the user's cell phone
+async function requestSmsOtpToken() {
+    const phoneNumber = document.getElementById('auth-phone').value.trim();
+    const errorLog = document.getElementById('auth-error-log');
+    errorLog.classList.add('hidden');
+
+    if (!phoneNumber) {
+        errorLog.textContent = "Please enter a valid phone number.";
+        errorLog.classList.remove('hidden');
+        return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithOtp({
+        phone: phoneNumber
+    });
+
+    if (error) {
+        errorLog.textContent = `SMS Pipeline Refusal: ${error.message}`;
+        errorLog.classList.remove('hidden');
+    } else {
+        // Text shipped successfully! Swap the UI input forms smoothly
+        document.getElementById('phone-input-step').classList.add('hidden');
+        document.getElementById('otp-verify-step').classList.remove('hidden');
+    }
+}
+
+// B. ASYNC TASK: Submit the 6-digit pin back to Supabase to verify the session
+async function verifySmsOtpToken() {
+    const phoneNumber = document.getElementById('auth-phone').value.trim();
+    const tokenCode = document.getElementById('auth-otp-token').value.trim();
+    const errorLog = document.getElementById('auth-error-log');
+    errorLog.classList.add('hidden');
+
+    if (tokenCode.length !== 6) {
+        errorLog.textContent = "Please enter the complete 6-digit pin code.";
+        errorLog.classList.remove('hidden');
+        return;
+    }
+
+    const { data: { session }, error } = await supabase.auth.verifyOtp({
+        phone: phoneNumber,
+        token: tokenCode,
+        type: 'sms' // Tells the verification engine to catch an SMS type event
+    });
+
+    if (error) {
+        errorLog.textContent = `Incorrect Code: ${error.message}`;
+        errorLog.classList.remove('hidden');
+    }
+    // Note: If successful, supabase.auth.onAuthStateChange handles wiping the splash overlay away!
+}
+
+// Helper UI navigation rollback task
+function changePhoneNumberBack() {
+    document.getElementById('otp-verify-step').classList.add('hidden');
+    document.getElementById('phone-input-step').classList.remove('hidden');
+}
+        
         // TRIGGER OAUTH REDIRECT PIPELINES VIA SUPABASE
 async function handleSocialLogin(providerName) {
     const errorLog = document.getElementById('auth-error-log');
