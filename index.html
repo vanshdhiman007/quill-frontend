@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quill | Fullstack Chat App</title>
@@ -27,6 +28,24 @@
     </style>
 </head>
 <body class="font-sans antialiased text-sm">
+
+    <div id="auth-guard-overlay" class="fixed inset-0 bg-zinc-950 z-[200] flex items-center justify-center">
+    <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-sm w-full shadow-2xl">
+        <h2 class="text-xl font-semibold font-serif mb-2 text-white">Welcome to Quill</h2>
+        <p class="text-zinc-500 text-xs mb-6">Create a free account or log in to manage your AI sessions.</p>
+        
+        <div class="space-y-3">
+            <input id="auth-email" type="email" placeholder="Email Address" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white">
+            <input id="auth-password" type="password" placeholder="Account Password" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white">
+            
+            <div class="flex gap-2 pt-2">
+                <button onclick="handleAccountLogin()" class="flex-1 bg-white text-black font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-200 transition-colors">Log In</button>
+                <button onclick="handleAccountRegistration()" class="flex-1 bg-zinc-800 text-zinc-200 border border-zinc-700 font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-700 transition-colors">Sign Up</button>
+            </div>
+        </div>
+        <p id="auth-error-log" class="text-xs text-red-400 font-medium mt-4 hidden text-center"></p>
+    </div>
+</div>
 
     <div id="delete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center transition-all opacity-0">
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 shadow-2xl scale-95 transition-transform duration-200">
@@ -90,6 +109,63 @@
     </div>
 
     <script>
+        // Replace these strings with your actual keys from your Supabase Dashboard
+const SUPABASE_URL = "https://your-project-id.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_x7TlrGJMddkZIxhqBv3g1w_MEC4JeMe";
+
+// Establish your cloud database client instance connection
+const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// MONITOR USER LOGINS: Listen for state changes (logged in or logged out)
+supabase.auth.onAuthStateChange((event, session) => {
+    const authOverlay = document.getElementById('auth-guard-overlay');
+    if (session) {
+        // User logged in successfully! Remove the overlay view restriction
+        authOverlay.classList.add('hidden');
+        // Update dashboard profiles dynamically based on account traits
+        document.querySelector('.text-zinc-300').textContent = session.user.email.split('@')[0];
+        document.querySelector('.text-\\[10px\\]').textContent = session.user.email;
+        renderSidebarChatList(); // Pull user's specific past logs down from Supabase
+    } else {
+        // No session token located? Trigger login block views immediately
+        authOverlay.classList.remove('hidden');
+    }
+});
+
+// ACCOUNT ACCOUNT SIGN UP MANAGEMENT
+async function handleAccountRegistration() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const errorLog = document.getElementById('auth-error-log');
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
+    if (error) {
+        errorLog.textContent = error.message;
+        errorLog.classList.remove('hidden');
+    } else {
+        alert("Verification link sent! Check your inbox to confirm your email.");
+    }
+}
+
+// MANAGEMENT OF RETURNING USER SIGN-INS
+async function handleAccountLogin() {
+    const email = document.getElementById('auth-email').value.trim();
+    const password = document.getElementById('auth-password').value.trim();
+    const errorLog = document.getElementById('auth-error-log');
+
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+        errorLog.textContent = error.message;
+        errorLog.classList.remove('hidden');
+    }
+}
+
+// LOGOUT MANAGEMENT INTERFACE
+async function triggerLogoutAction() {
+    await supabase.auth.signOut();
+    window.location.reload();
+}
+
         const inputArea = document.getElementById('chat-textarea');
         const stream = document.getElementById('message-stream');
         const heroSection = document.getElementById('intro-hero');
@@ -126,28 +202,38 @@
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
         }
 
-        function renderSidebarChatList() {
-            sidebarList.innerHTML = '';
-            const db = getVault();
-            const keys = Object.keys(db).sort().reverse();
-            if (keys.length === 0) { sidebarList.innerHTML = `<p class="text-[11px] text-zinc-600 italic p-3">No chats found.</p>`; return; }
+        async function renderSidebarChatList() {
+    sidebarList.innerHTML = '';
+    const user = (await supabase.auth.getUser()).data.user;
+    if (!user) return;
 
-            keys.forEach(id => {
-                const titleText = db[id][0]?.text || "New Conversation";
-                const displayTitle = titleText.length > 22 ? titleText.substring(0, 22) + '...' : titleText;
-                const activeStyle = id === currentChatId ? 'bg-zinc-900 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-zinc-900/60';
+    // Grab chat rooms belonging ONLY to this specific authenticated user ID
+    const { data: sessions, error } = await supabase
+        .from('chat_sessions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
 
-                sidebarList.innerHTML += `
-                    <div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}">
-                        <button onclick="loadTargetChatSession('${id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">
-                            ${displayTitle}
-                        </button>
-                        <button onclick="triggerSidebarDelete(event, '${id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                    </div>`;
-            });
-        }
+    if (!sessions || sessions.length === 0) {
+        sidebarList.innerHTML = `<p class="text-[11px] text-zinc-600 italic p-3">No conversations logged.</p>`;
+        return;
+    }
+
+    sessions.forEach(session => {
+        const displayTitle = session.title.length > 22 ? session.title.substring(0, 22) + '...' : session.title;
+        const activeStyle = session.id === currentChatId ? 'bg-zinc-900 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-zinc-900/60';
+
+        sidebarList.innerHTML += `
+            <div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}">
+                <button onclick="loadTargetChatSession('${session.id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">
+                    ${displayTitle}
+                </button>
+                <button onclick="deleteSingleChatSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                </button>
+            </div>`;
+    });
+}
 
         function triggerSidebarDelete(event, id) {
             event.stopPropagation();
@@ -159,59 +245,53 @@
             });
         }
 
-        function loadTargetChatSession(id) {
-            currentChatId = id;
-            stream.innerHTML = '';
-            heroSection.classList.add('hidden');
-            stream.classList.remove('hidden');
-            getVault()[id]?.forEach(msg => appendMessageDOM(msg.sender, msg.text, msg.id));
-            renderSidebarChatList();
-            document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
-        }
+        async function loadTargetChatSession(sessionId) {
+    currentChatId = sessionId;
+    stream.innerHTML = '';
+    heroSection.classList.add('hidden');
+    stream.classList.remove('hidden');
 
-        function appendMessageDOM(sender, text, msgId) {
-            const isUser = sender === 'user';
-            
-            // CLEAN CHATGPT CARD LOOKS
-            if (isUser) {
-                stream.innerHTML += `
-                    <div class="flex items-start gap-4 justify-end message-bubble w-full group" id="container-${msgId}">
-                        <div class="flex flex-col items-end max-w-[85%]">
-                            <div class="bg-zinc-800 text-zinc-100 px-4 py-2.5 rounded-2xl border border-zinc-700/30 text-[13px] leading-relaxed whitespace-pre-wrap">${text}</div>
-                            <div class="action-trigger opacity-0 flex gap-2.5 text-[11px] text-zinc-500 mt-1.5 transition-opacity duration-150 px-1">
-                                <button onclick="editMessageInline('${msgId}')" class="hover:text-zinc-300 flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit
-                                </button>
-                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>`;
-            } else {
-                stream.innerHTML += `
-                    <div class="flex items-start gap-3 justify-start message-bubble w-full group" id="container-${msgId}">
-                        <div class="h-6 w-6 rounded-full bg-zinc-800 text-[10px] text-zinc-400 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-700/40">AI</div>
-                        <div class="flex flex-col max-w-[85%]">
-                            <div class="text-zinc-200 text-[13px] leading-relaxed whitespace-pre-wrap pt-0.5" id="body-${msgId}">${text}</div>
-                            <div class="action-trigger opacity-0 flex gap-2 text-[11px] text-zinc-500 mt-2 transition-opacity duration-150">
-                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>`;
-            }
-        }
+    const { data: messages } = await supabase
+        .from('chat_messages')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('created_at', { ascending: true });
 
-        function triggerBubbleDelete(msgId) {
-            openConfirmationModal(() => {
-                const db = getVault();
-                db[currentChatId] = db[currentChatId].filter(m => m.id !== msgId);
-                saveVault(db);
-                loadTargetChatSession(currentChatId);
-            });
+    if (messages) {
+        messages.forEach(msg => appendMessageDOM(msg.sender, msg.text, msg.id));
+    }
+    renderSidebarChatList();
+    document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
+}
+
+        async function appendMessageToCloudDatabase(sender, text) {
+    const user = (await supabase.auth.getUser()).data.user;
+    
+    // Create a new session row if this is the first message of a conversation
+    if (sender === 'user') {
+        const { data: existingSession } = await supabase.from('chat_sessions').select('*').eq('id', currentChatId).single();
+        if (!existingSession) {
+            await supabase.from('chat_sessions').insert({ id: currentChatId, user_id: user.id, title: text });
         }
+    }
+
+    const newMsgId = 'msg-' + Date.now(); // Optional local id, database auto-generates uuid
+    const { data: insertedMsg } = await supabase.from('chat_messages').insert({
+        session_id: currentChatId,
+        user_id: user.id,
+        sender: sender,
+        text: text
+    }).select().single();
+
+    return insertedMsg ? insertedMsg.id : newMsgId;
+}
+
+        async function triggerBubbleDelete(msgId) {
+    openConfirmationModal(async () => {
+        await supabase.from('chat_messages').delete().eq('id', msgId);
+        loadTargetChatSession(currentChatId);
+    });
+}
 
         function editMessageInline(msgId) {
             const currentBody = document.getElementById(`body-${msgId}`) || document.querySelector(`#container-${msgId} .bg-zinc-800`);
