@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quill | Fullstack Chat App</title>
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Figtree:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono&display=swap" rel="stylesheet">
@@ -141,11 +141,11 @@
         </main>
     </div>
 
-    <script>
+   <script>
         // CONFIGURATION PARAMETERS - PLACE YOUR CREDENTIAL STRINGS HERE
-        const SUPABASE_URL = "https://lwriefilihpglrclbapm.supabase.co";
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU";
-        const PRODUCTION_BACKEND_URL = "https://quill-backend-wk4m.onrender.com/chat";
+        const SUPABASE_URL = "https://lwriefilihpglrclbapm.supabase.co"; 
+        const SUPABASE_ANON_KEY = "your-actual-supabase-anon-key-string"; // <-- Paste your Anon Key here
+        const PRODUCTION_BACKEND_URL = "https://quill-backend.onrender.com/chat"; // <-- Verify this matches Render
 
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
@@ -161,14 +161,16 @@
             startNewChatWindow();
         };
 
-        inputArea.addEventListener('keydown', (e) => { 
-            if (e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                submitUserQuery(); 
-            } 
-        });
+        if (inputArea) {
+            inputArea.addEventListener('keydown', (e) => { 
+                if (e.key === 'Enter' && !e.shiftKey) { 
+                    e.preventDefault(); 
+                    submitUserQuery(); 
+                } 
+            });
+        }
 
-        // RE-IDENTITY WATCHER HANDLER
+        // IDENTITY WATCHER HANDLER
         supabase.auth.onAuthStateChange((event, session) => {
             const authOverlay = document.getElementById('auth-guard-overlay');
             if (session) {
@@ -183,45 +185,37 @@
         });
 
         // UPGRADED BULLETPROOF AUTO-LOCATION ENGINE
-async function detectUserCountryCode() {
-    const phoneInput = document.getElementById('auth-phone');
-    const statusText = document.getElementById('location-status');
-    const dot = document.getElementById('location-dot');
+        async function detectUserCountryCode() {
+            const phoneInput = document.getElementById('auth-phone');
+            const statusText = document.getElementById('location-status');
+            const dot = document.getElementById('location-dot');
 
-    // List of reliable backup geolocation endpoints
-    const apiEndpoints = [
-        'https://ipapi.co/json/',
-        'https://ip-api.com/json/?fields=status,country,countryCode,callingCode'
-    ];
+            const apiEndpoints = [
+                'https://ipapi.co/json/',
+                'https://ip-api.com/json/?fields=status,country,countryCode,callingCode'
+            ];
 
-    for (let url of apiEndpoints) {
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            // Extract the calling code depending on which api responded first
-            let dialCode = data.country_calling_code || (data.callingCode ? '+' + data.callingCode : null);
-            let countryName = data.country_name || data.country;
+            for (let url of apiEndpoints) {
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    
+                    let dialCode = data.country_calling_code || (data.callingCode ? '+' + data.callingCode : null);
+                    let countryName = data.country_name || data.country;
 
-            if (dialCode) {
-                phoneInput.value = dialCode;
-                
-                // Update indicator lights to green
-                dot.className = "h-2 w-2 rounded-full bg-emerald-500";
-                statusText.textContent = `Auto-detected location: ${countryName} (${dialCode})`;
-                return; // Code successfully injected, exit the loop!
+                    if (dialCode) {
+                        phoneInput.value = dialCode;
+                        dot.className = "h-2 w-2 rounded-full bg-emerald-500";
+                        statusText.textContent = `Auto-detected location: ${countryName} (${dialCode})`;
+                        return; 
+                    }
+                } catch (err) {
+                    console.log(`Failed fetching location from ${url}, trying backup...`);
+                    continue; 
+                }
             }
-        } catch (err) {
-            console.log(`Failed fetching from ${url}, trying backup...`);
-            continue; // Fall through to the next backup link if blocked
+            fallbackLocationUI();
         }
-    }
-
-    // Ultimate fail-safe if all networks block the third-party requests
-    phoneInput.value = "+"; 
-    dot.className = "h-2 w-2 rounded-full bg-amber-500";
-    statusText.textContent = "Location blocked. Please enter your country code manually.";
-}
 
         function fallbackLocationUI() {
             document.getElementById('auth-phone').value = "+";
@@ -242,7 +236,7 @@ async function detectUserCountryCode() {
             const num = document.getElementById('auth-phone').value.trim();
             const log = document.getElementById('auth-error-log');
             log.classList.add('hidden');
-            if(!num) { log.textContent = "Please fill out your target phone digits."; log.classList.remove('hidden'); return; }
+            if(!num) { log.textContent = "Please fill out your phone digits."; log.classList.remove('hidden'); return; }
 
             const { error } = await supabase.auth.signInWithOtp({ phone: num });
             if (error) { log.textContent = error.message; log.classList.remove('hidden'); }
@@ -279,7 +273,7 @@ async function detectUserCountryCode() {
             document.getElementById('modal-confirm-btn').onclick = () => { confirmAction(); closeConfirmationModal(); };
         }
 
-         //Gentile layout close transitions
+        // Gentle layout close transitions
         function closeConfirmationModal() {
             modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
@@ -287,13 +281,15 @@ async function detectUserCountryCode() {
 
         function startNewChatWindow() {
             currentChatId = 'room-' + Date.now();
-            stream.innerHTML = ''; stream.classList.add('hidden');
-            heroSection.classList.remove('hidden'); inputArea.value = '';
+            if (stream) { stream.innerHTML = ''; stream.classList.add('hidden'); }
+            if (heroSection) heroSection.classList.remove('hidden'); 
+            if (inputArea) inputArea.value = '';
             renderSidebarChatList();
         }
 
         // CLOUD OPERATIONS PIPELINES CONTROLLERS
         async function renderSidebarChatList() {
+            if (!sidebarList) return;
             sidebarList.innerHTML = '';
             const user = (await supabase.auth.getUser()).data.user;
             if (!user) return;
@@ -321,6 +317,7 @@ async function detectUserCountryCode() {
 
         async function loadTargetChatSession(sessionId) {
             currentChatId = sessionId;
+            if (!stream) return;
             stream.innerHTML = ''; heroSection.classList.add('hidden'); stream.classList.remove('hidden');
 
             const { data: messages } = await supabase.from('chat_messages').select('*').eq('session_id', sessionId).order('created_at', { ascending: true });
@@ -359,7 +356,6 @@ async function detectUserCountryCode() {
             const originalText = currentContainer.textContent;
             const newText = prompt("Edit your prompt:", originalText);
             if (newText && newText.trim() !== originalText) {
-                // Wipe downstream messages following this edited index
                 await supabase.from('chat_messages').delete().eq('session_id', currentChatId).gt('id', msgId);
                 await supabase.from('chat_messages').update({ text: newText }).eq('id', msgId);
                 loadTargetChatSession(currentChatId);
@@ -370,6 +366,7 @@ async function detectUserCountryCode() {
         }
 
         function appendMessageDOM(sender, text, msgId) {
+            if (!stream) return;
             const isUser = sender === 'user';
             if (isUser) {
                 stream.innerHTML += `
@@ -396,18 +393,18 @@ async function detectUserCountryCode() {
             }
         }
 
-        // FULL STREAMING PROCESSING ENGINE LINK WITH MEMORY CORES INJECTIONS
         async function submitUserQuery(isEditTrigger = false) {
             const query = isEditTrigger ? inputArea.value : inputArea.value.trim();
             if (!query) return;
 
-            heroSection.classList.add('hidden'); stream.classList.remove('hidden');
+            if (heroSection) heroSection.classList.add('hidden'); 
+            if (stream) stream.classList.remove('hidden');
 
             if (!isEditTrigger) {
                 const localUserMsgId = 'temp-user-' + Date.now();
                 appendMessageDOM('user', query, localUserMsgId);
                 await appendMessageToCloudDatabase('user', query);
-                inputArea.value = '';
+                if (inputArea) inputArea.value = '';
             }
 
             const localAiMsgId = 'temp-ai-' + Date.now();
@@ -416,10 +413,7 @@ async function detectUserCountryCode() {
             let fullAiResponse = "";
 
             try {
-                // Fetch latest records sequence from database storage to feed as raw context history
                 const { data: logs } = await supabase.from('chat_messages').select('sender, text').eq('session_id', currentChatId).order('created_at', { ascending: true });
-                
-                // Establish strict brevity guidelines in the instruction set
                 const historyPayload = [{ role: "system", content: "You are a concise AI assistant. Respond in 2-3 sentences max. Be direct and avoid general filler prose." }];
                 
                 if (logs) {
@@ -441,16 +435,15 @@ async function detectUserCountryCode() {
                     const { value, done } = await reader.read();
                     if (done) break;
                     fullAiResponse += decoder.decode(value, { stream: true });
-                    responseTextElement.textContent = fullAiResponse;
+                    if (responseTextElement) responseTextElement.textContent = fullAiResponse;
                     document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
                 }
 
-                // Append the completed streaming statement string block safely to Supabase
                 await appendMessageToCloudDatabase('ai', fullAiResponse);
-                loadTargetChatSession(currentChatId); // Reload to lock native DB IDs onto bubbles
+                loadTargetChatSession(currentChatId); 
 
             } catch (err) {
-                responseTextElement.innerHTML = `<span class="text-red-400 font-medium">Link broke during connection ingestion pipeline loop.</span>`;
+                if (responseTextElement) responseTextElement.innerHTML = `<span class="text-red-400 font-medium">Link broke during connection ingestion pipeline loop.</span>`;
             }
         }
     </script>
