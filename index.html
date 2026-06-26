@@ -4,7 +4,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quill | Fullstack Chat App</title>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Figtree:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono&display=swap" rel="stylesheet">
@@ -15,8 +17,6 @@
             theme: { extend: { fontFamily: { sans: ['Figtree', 'sans-serif'], serif: ['EB Garamond', 'serif'], mono: ['JetBrains Mono', 'monospace'] } } }
         }
     </script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         body { background-color: rgb(9, 9, 11); color: rgb(250, 250, 250); }
@@ -75,13 +75,13 @@
             </div>
 
             <div class="grid grid-cols-2 gap-2 mt-2">
-    <button type="button" onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 text-zinc-400 gap-2 text-xs">
-        Google
-    </button>
-    <button type="button" onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 text-zinc-400 gap-2 text-xs">
-        GitHub
-    </button>
-</div>
+                <button type="button" onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 text-zinc-400 gap-2 text-xs">
+                    Google
+                </button>
+                <button type="button" onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 text-zinc-400 gap-2 text-xs">
+                    GitHub
+                </button>
+            </div>
             <p id="auth-error-log" class="text-xs text-red-400 font-medium mt-4 hidden text-center"></p>
         </div>
     </div>
@@ -141,9 +141,9 @@
         </main>
     </div>
 
-   <script>
+    <script>
         const SUPABASE_URL = "https://lwriefilihpglrclbapm.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU"; 
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU"; // <-- Remember to replace with your real public key string block 
         const PRODUCTION_BACKEND_URL = "https://quill-backend-wk4m.onrender.com/chat"; 
 
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -259,6 +259,7 @@
             document.getElementById('modal-confirm-btn').onclick = () => { confirmAction(); closeConfirmationModal(); };
         }
 
+        // Gentle layout close transitions
         function closeConfirmationModal() {
             modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
