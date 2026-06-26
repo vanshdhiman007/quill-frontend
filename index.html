@@ -142,13 +142,11 @@
     </div>
 
    <script>
-        // CONFIGURATION PARAMETERS - PLACE YOUR CREDENTIAL STRINGS HERE
         const SUPABASE_URL = "https://lwriefilihpglrclbapm.supabase.co"; 
-        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU"; // <-- Paste your Anon Key here
-        const PRODUCTION_BACKEND_URL = "https://quill-backend-wk4m.onrender.com/chat"; // <-- Verify this matches Render
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU"; 
+        const PRODUCTION_BACKEND_URL = "https://quill-backend-wk4m.onrender.com/chat"; 
 
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
         const inputArea = document.getElementById('chat-textarea');
         const stream = document.getElementById('message-stream');
         const heroSection = document.getElementById('intro-hero');
@@ -170,7 +168,6 @@
             });
         }
 
-        // IDENTITY WATCHER HANDLER
         supabase.auth.onAuthStateChange((event, session) => {
             const authOverlay = document.getElementById('auth-guard-overlay');
             if (session) {
@@ -184,33 +181,27 @@
             }
         });
 
-        // UPGRADED BULLETPROOF AUTO-LOCATION ENGINE
         async function detectUserCountryCode() {
             const phoneInput = document.getElementById('auth-phone');
             const statusText = document.getElementById('location-status');
             const dot = document.getElementById('location-dot');
-
             const apiEndpoints = [
                 'https://ipapi.co/json/',
                 'https://ip-api.com/json/?fields=status,country,countryCode,callingCode'
             ];
-
             for (let url of apiEndpoints) {
                 try {
                     const response = await fetch(url);
                     const data = await response.json();
-                    
                     let dialCode = data.country_calling_code || (data.callingCode ? '+' + data.callingCode : null);
                     let countryName = data.country_name || data.country;
-
                     if (dialCode) {
                         phoneInput.value = dialCode;
                         dot.className = "h-2 w-2 rounded-full bg-emerald-500";
-                        statusText.textContent = `Auto-detected location: ${countryName} (${dialCode})`;
+                        statusText.textContent = "Location: " + countryName + " (" + dialCode + ")";
                         return; 
                     }
                 } catch (err) {
-                    console.log(`Failed fetching location from ${url}, trying backup...`);
                     continue; 
                 }
             }
@@ -220,10 +211,9 @@
         function fallbackLocationUI() {
             document.getElementById('auth-phone').value = "+";
             document.getElementById('location-dot').className = "h-2 w-2 rounded-full bg-amber-500";
-            document.getElementById('location-status').textContent = "Provide your phone country calling index code manually.";
+            document.getElementById('location-status').textContent = "Enter country code manually.";
         }
 
-        // SOCIAL OAUTH TRIGGER CORE
         async function handleSocialLogin(providerName) {
             await supabase.auth.signInWithOAuth({
                 provider: providerName,
@@ -231,13 +221,11 @@
             });
         }
 
-        // TWILIO SMS GENERATOR PIPELINES
         async function requestSmsOtpToken() {
             const num = document.getElementById('auth-phone').value.trim();
             const log = document.getElementById('auth-error-log');
             log.classList.add('hidden');
-            if(!num) { log.textContent = "Please fill out your phone digits."; log.classList.remove('hidden'); return; }
-
+            if(!num) { log.textContent = "Enter phone number."; log.classList.remove('hidden'); return; }
             const { error } = await supabase.auth.signInWithOtp({ phone: num });
             if (error) { log.textContent = error.message; log.classList.remove('hidden'); }
             else {
@@ -251,7 +239,6 @@
             const token = document.getElementById('auth-otp-token').value.trim();
             const log = document.getElementById('auth-error-log');
             log.classList.add('hidden');
-
             const { error } = await supabase.auth.verifyOtp({ phone: num, token: token, type: 'sms' });
             if (error) { log.textContent = error.message; log.classList.remove('hidden'); }
         }
@@ -266,14 +253,12 @@
             window.location.reload();
         }
 
-        // MODAL BOX ANIMATION WINDOW OVERLAYS
         function openConfirmationModal(confirmAction) {
             modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
             document.getElementById('modal-confirm-btn').onclick = () => { confirmAction(); closeConfirmationModal(); };
         }
 
-        // Gentle layout close transitions
         function closeConfirmationModal() {
             modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
@@ -287,31 +272,19 @@
             renderSidebarChatList();
         }
 
-        // CLOUD OPERATIONS PIPELINES CONTROLLERS
         async function renderSidebarChatList() {
             if (!sidebarList) return;
             sidebarList.innerHTML = '';
             const user = (await supabase.auth.getUser()).data.user;
             if (!user) return;
-
             const { data: sessions } = await supabase.from('chat_sessions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
             if (!sessions || sessions.length === 0) {
                 sidebarList.innerHTML = `<p class="text-[11px] text-zinc-600 italic p-3">No conversations saved.</p>`; return;
             }
-
             sessions.forEach(session => {
                 const displayTitle = session.title.length > 22 ? session.title.substring(0, 22) + '...' : session.title;
                 const activeStyle = session.id === currentChatId ? 'bg-zinc-900 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-zinc-900/60';
-
-                sidebarList.innerHTML += `
-                    <div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}">
-                        <button onclick="loadTargetChatSession('${session.id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">
-                            ${displayTitle}
-                        </button>
-                        <button onclick="deleteSingleChatSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                        </button>
-                    </div>`;
+                sidebarList.innerHTML += `<div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}"><button onclick="loadTargetChatSession('${session.id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">${displayTitle}</button><button onclick="deleteSingleChatSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg></button></div>`;
             });
         }
 
@@ -319,7 +292,6 @@
             currentChatId = sessionId;
             if (!stream) return;
             stream.innerHTML = ''; heroSection.classList.add('hidden'); stream.classList.remove('hidden');
-
             const { data: messages } = await supabase.from('chat_messages').select('*').eq('session_id', sessionId).order('created_at', { ascending: true });
             if (messages) messages.forEach(msg => appendMessageDOM(msg.sender, msg.text, msg.id));
             renderSidebarChatList();
@@ -359,7 +331,6 @@
                 await supabase.from('chat_messages').delete().eq('session_id', currentChatId).gt('id', msgId);
                 await supabase.from('chat_messages').update({ text: newText }).eq('id', msgId);
                 loadTargetChatSession(currentChatId);
-                
                 inputArea.value = newText;
                 submitUserQuery(true);
             }
@@ -369,68 +340,42 @@
             if (!stream) return;
             const isUser = sender === 'user';
             if (isUser) {
-                stream.innerHTML += `
-                    <div class="flex items-start gap-4 justify-end message-bubble w-full group" id="container-${msgId}">
-                        <div class="flex flex-col items-end max-w-[85%]">
-                            <div class="bg-zinc-800 text-zinc-100 px-4 py-2.5 rounded-2xl border border-zinc-700/30 text-[13px] leading-relaxed whitespace-pre-wrap">${text}</div>
-                            <div class="action-trigger opacity-0 flex gap-2.5 text-[11px] text-zinc-500 mt-1.5 transition-opacity duration-150 px-1">
-                                <button onclick="editMessageInline('${msgId}')" class="hover:text-zinc-300 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
-                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete</button>
-                            </div>
-                        </div>
-                    </div>`;
+                stream.innerHTML += `<div class="flex items-start gap-4 justify-end message-bubble w-full group" id="container-${msgId}"><div class="flex flex-col items-end max-w-[85%]"><div class="bg-zinc-800 text-zinc-100 px-4 py-2.5 rounded-2xl border border-zinc-700/30 text-[13px] leading-relaxed whitespace-pre-wrap">${text}</div><div class="action-trigger opacity-0 flex gap-2.5 text-[11px] text-zinc-500 mt-1.5 transition-opacity duration-150 px-1"><button onclick="editMessageInline('${msgId}')" class="hover:text-zinc-300 flex items-center gap-1">Edit</button><button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1">Delete</button></div></div></div>`;
             } else {
-                stream.innerHTML += `
-                    <div class="flex items-start gap-3 justify-start message-bubble w-full group" id="container-${msgId}">
-                        <div class="h-6 w-6 rounded-full bg-zinc-800 text-[10px] text-zinc-400 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-700/40">AI</div>
-                        <div class="flex flex-col max-w-[85%]">
-                            <div class="text-zinc-200 text-[13px] leading-relaxed whitespace-pre-wrap pt-0.5" id="body-${msgId}">${text}</div>
-                            <div class="action-trigger opacity-0 flex gap-2 text-[11px] text-zinc-500 mt-2 transition-opacity duration-150">
-                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete</button>
-                            </div>
-                        </div>
-                    </div>`;
+                stream.innerHTML += `<div class="flex items-start gap-3 justify-start message-bubble w-full group" id="container-${msgId}"><div class="h-6 w-6 rounded-full bg-zinc-800 text-[10px] text-zinc-400 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-700/40">AI</div><div class="flex flex-col max-w-[85%]"><div class="text-zinc-200 text-[13px] leading-relaxed whitespace-pre-wrap pt-0.5" id="body-${msgId}">${text}</div><div class="action-trigger opacity-0 flex gap-2 text-[11px] text-zinc-500 mt-2 transition-opacity duration-150"><button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1">Delete</button></div></div></div>`;
             }
         }
 
         async function submitUserQuery(isEditTrigger = false) {
             const query = isEditTrigger ? inputArea.value : inputArea.value.trim();
             if (!query) return;
-
             if (heroSection) heroSection.classList.add('hidden'); 
             if (stream) stream.classList.remove('hidden');
-
             if (!isEditTrigger) {
                 const localUserMsgId = 'temp-user-' + Date.now();
                 appendMessageDOM('user', query, localUserMsgId);
                 await appendMessageToCloudDatabase('user', query);
                 if (inputArea) inputArea.value = '';
             }
-
             const localAiMsgId = 'temp-ai-' + Date.now();
             appendMessageDOM('ai', '', localAiMsgId);
             const responseTextElement = document.getElementById(`body-${localAiMsgId}`);
             let fullAiResponse = "";
-
             try {
                 const { data: logs } = await supabase.from('chat_messages').select('sender, text').eq('session_id', currentChatId).order('created_at', { ascending: true });
-                const historyPayload = [{ role: "system", content: "You are a concise AI assistant. Respond in 2-3 sentences max. Be direct and avoid general filler prose." }];
-                
+                const historyPayload = [{ role: "system", content: "You are a concise AI assistant." }];
                 if (logs) {
                     logs.forEach(log => {
                         historyPayload.push({ role: log.sender === 'user' ? 'user' : 'assistant', content: log.text });
                     });
                 }
-
                 const response = await fetch(PRODUCTION_BACKEND_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ messages: historyPayload })
                 });
-
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-
                 while (true) {
                     const { value, done } = await reader.read();
                     if (done) break;
@@ -438,12 +383,10 @@
                     if (responseTextElement) responseTextElement.textContent = fullAiResponse;
                     document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
                 }
-
                 await appendMessageToCloudDatabase('ai', fullAiResponse);
                 loadTargetChatSession(currentChatId); 
-
             } catch (err) {
-                if (responseTextElement) responseTextElement.innerHTML = `<span class="text-red-400 font-medium">Link broke during connection ingestion pipeline loop.</span>`;
+                if (responseTextElement) responseTextElement.innerHTML = `<span>Error connecting to server.</span>`;
             }
         }
     </script>
