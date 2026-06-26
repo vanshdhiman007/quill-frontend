@@ -1,88 +1,88 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
 <head>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quill | Fullstack Chat App</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Figtree:wght@400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: { extend: { fontFamily: { sans: ['Figtree', 'sans-serif'], serif: ['EB Garamond', 'serif'], mono: ['JetBrains Mono', 'monospace'] } } }
         }
     </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        :root { 
-            --background: 240 10% 3.9%; 
-            --foreground: 0 0% 98%; 
-            --surface: 240 10% 5.9%; 
-            --border: 240 5.9% 15%; 
-            --primary: 142.1 76.2% 36.3%; 
-        }
         body { background-color: rgb(9, 9, 11); color: rgb(250, 250, 250); }
-        /* Smooth fade-in for action icons */
         .message-bubble:hover .action-trigger { opacity: 1; }
     </style>
 </head>
 <body class="font-sans antialiased text-sm">
 
-  <div id="auth-guard-overlay" class="fixed inset-0 bg-zinc-950 z-[200] flex items-center justify-center overflow-y-auto py-8">
-    <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-sm w-full shadow-2xl">
-        <h2 class="text-xl font-semibold font-serif mb-1 text-white">Welcome to Quill</h2>
-        <p class="text-zinc-500 text-xs mb-6">Enter your mobile number to receive a secure login verification code.</p>
-        
-        <div id="phone-input-step" class="space-y-4">
-            <div>
-                <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1.5">Mobile Number</label>
-                <input id="auth-phone" type="tel" placeholder="+1234567890" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg p-2.5 outline-none focus:border-zinc-600 text-white font-mono">
-                <span class="text-[10px] text-zinc-600 block mt-1">Include country code prefix (e.g., +1 or +91)</span>
-            </div>
-            <button onclick="requestSmsOtpToken()" class="w-full bg-white text-black font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-200 transition-colors shadow-md flex items-center justify-center gap-1.5">
-                Send Verification Code
-            </button>
-        </div>
-
-        <div id="otp-verify-step" class="space-y-4 hidden animate-in fade-in duration-300">
-            <div>
-                <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-1.5">Enter 6-Digit Code</label>
-                <input id="auth-otp-token" type="text" maxlength="6" placeholder="000000" class="w-full bg-zinc-950 border border-zinc-800 text-lg rounded-lg p-2.5 outline-none focus:border-zinc-500 text-white font-mono tracking-[0.5em] text-center">
-            </div>
-            <div class="flex gap-2">
-                <button onclick="changePhoneNumberBack()" class="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-lg text-xs transition-colors">Back</button>
-                <button onclick="verifySmsOtpToken()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs py-2.5 transition-colors shadow">Verify & Login</button>
-            </div>
-        </div>
-
-        <div class="relative flex py-3 items-center mt-4">
-            <div class="flex-grow border-t border-zinc-800/80"></div>
-            <span class="flex-shrink mx-3 text-zinc-600 text-[9px] uppercase font-bold tracking-widest">Social login</span>
-            <div class="flex-grow border-t border-zinc-800/80"></div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2 mt-2">
-            <button onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 gap-2 text-xs">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.113-5.136 4.113A5.44 5.44 0 0 1 8.56 13.08a5.44 5.44 0 0 1 5.432-5.433c2.274 0 4.193 1.226 5.099 3.03l3.69-1.536C21.21 5.562 17.001 3 13.992 3c-5.523 0-10 4.477-10 10s4.477 10 10 10c5.514 0 10-4.486 10-10 0-.743-.1-1.46-.285-2.143l-11.467.028z"/></svg> Google
-            </button>
-            <button onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 gap-2 text-xs">
-                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.082.822-.26.822-.577v-2.234c-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.241-1.305.408-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22v3.293c0 .319.22.694.825.576C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg> GitHub
-            </button>
-        </div>
-
-        <p id="auth-error-log" class="text-xs text-red-400 font-medium mt-4 hidden text-center"></p>
-    </div>
-</div>
-
-    <div id="delete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center transition-all opacity-0">
+    <div id="delete-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden items-center justify-center opacity-0 transition-all">
         <div class="bg-zinc-900 border border-zinc-800 rounded-xl max-w-md w-full p-6 shadow-2xl scale-95 transition-transform duration-200">
-            <h3 class="text-lg font-semibold text-white font-sans mb-2">Delete conversation?</h3>
-            <p class="text-zinc-400 text-sm mb-6">This will permanently delete this chat history loop from your local web memory. This action cannot be undone.</p>
+            <h3 class="text-lg font-semibold text-white font-sans mb-2">Confirm Action</h3>
+            <p class="text-zinc-400 text-sm mb-6">Are you sure you want to perform this structural delete process? This action cannot be undone.</p>
             <div class="flex justify-end gap-3">
                 <button onclick="closeConfirmationModal()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-lg text-xs transition-colors">Cancel</button>
                 <button id="modal-confirm-btn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg text-xs transition-colors">Delete</button>
             </div>
+        </div>
+    </div>
+
+    <div id="auth-guard-overlay" class="fixed inset-0 bg-zinc-950 z-[200] flex items-center justify-center overflow-y-auto py-8">
+        <div class="bg-zinc-900 border border-zinc-800 p-8 rounded-2xl max-w-sm w-full shadow-2xl">
+            <h2 class="text-xl font-semibold font-serif mb-1 text-white">Welcome to Quill</h2>
+            <p class="text-zinc-500 text-xs mb-6">Enter your mobile number to verify and access your cloud workspace sync.</p>
+            
+            <div id="phone-input-step" class="space-y-4">
+                <div>
+                    <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-500 block mb-1.5">Mobile Number</label>
+                    <div class="relative flex items-center">
+                        <div class="absolute left-3 flex items-center pointer-events-none">
+                            <span id="location-dot" class="h-2 w-2 rounded-full bg-zinc-700 animate-pulse"></span>
+                        </div>
+                        <input id="auth-phone" type="tel" placeholder="+1234567890" class="w-full bg-zinc-950 border border-zinc-800 text-sm rounded-lg pl-8 pr-3 py-2.5 outline-none focus:border-zinc-600 text-white font-mono">
+                    </div>
+                    <span id="location-status" class="text-[10px] text-zinc-600 block mt-1.5">Locating nearest network routing parameters...</span>
+                </div>
+                <button onclick="requestSmsOtpToken()" class="w-full bg-white text-black font-semibold rounded-lg text-xs py-2.5 hover:bg-zinc-200 transition-colors shadow-md">
+                    Send Verification Code
+                </button>
+            </div>
+
+            <div id="otp-verify-step" class="space-y-4 hidden animate-in fade-in duration-300">
+                <div>
+                    <label class="text-[10px] uppercase font-bold tracking-wider text-zinc-400 block mb-1.5">Enter 6-Digit Code</label>
+                    <input id="auth-otp-token" type="text" maxlength="6" placeholder="000000" class="w-full bg-zinc-950 border border-zinc-800 text-lg rounded-lg p-2.5 outline-none focus:border-zinc-500 text-white font-mono tracking-[0.5em] text-center">
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="changePhoneNumberBack()" class="px-3 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-medium rounded-lg text-xs transition-colors">Back</button>
+                    <button onclick="verifySmsOtpToken()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-xs py-2.5 transition-colors shadow">Verify & Login</button>
+                </div>
+            </div>
+
+            <div class="relative flex py-3 items-center mt-4">
+                <div class="flex-grow border-t border-zinc-800/80"></div>
+                <span class="flex-shrink mx-3 text-zinc-600 text-[9px] uppercase font-bold tracking-widest">Or continue with</span>
+                <div class="flex-grow border-t border-zinc-800/80"></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 mt-2">
+                <button onclick="handleSocialLogin('google')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 font-medium gap-2 text-xs">
+                    Google
+                </button>
+                <button onclick="handleSocialLogin('github')" class="flex items-center justify-center py-2 bg-zinc-950 border border-zinc-800 rounded-lg hover:bg-zinc-800/60 transition-colors text-zinc-400 font-medium gap-2 text-xs">
+                    GitHub
+                </button>
+            </div>
+            <p id="auth-error-log" class="text-xs text-red-400 font-medium mt-4 hidden text-center"></p>
         </div>
     </div>
 
@@ -91,28 +91,34 @@
         <aside class="hidden md:flex flex-col w-72 border-r border-zinc-800 bg-zinc-950 h-screen z-10">
             <div class="p-4 flex items-center justify-between border-b border-zinc-900">
                 <a class="flex items-center gap-2" href="#">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(34, 197, 94)" stroke-width="2" class="text-emerald-500"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(34, 197, 94)" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                     <span class="font-serif text-lg font-semibold tracking-tight text-white">Quill</span>
                 </a>
             </div>
-            <div class="p-3">
+            <div class="p-3 flex flex-col gap-1.5">
                 <button onclick="startNewChatWindow()" class="w-full flex items-center justify-center gap-2 bg-zinc-900 border border-zinc-800/80 rounded-lg text-xs font-medium px-4 py-2.5 hover:bg-zinc-800 transition-colors text-zinc-200 shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg> New chat
                 </button>
             </div>
-            <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Recent Chats</div>
+            
+            <div class="px-4 py-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">Recent Conversations</div>
             <div id="history-sidebar-list" class="flex-1 overflow-y-auto px-2 space-y-0.5"></div>
             
-            <div class="border-t border-zinc-900 p-3 flex items-center gap-3 bg-zinc-950/40">
-                <div class="h-7 w-7 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-semibold">A</div>
-                <div class="min-w-0 flex-1">
-                    <div class="text-xs font-medium truncate text-zinc-300">alpha_researcher_100</div>
-                    <div class="text-[10px] text-zinc-500 truncate">xahew17166@jctoto.com</div>
+            <div class="border-t border-zinc-900 p-3 flex items-center justify-between bg-zinc-950/40">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="h-7 w-7 rounded-full bg-zinc-800 text-zinc-200 flex items-center justify-center text-xs font-semibold shrink-0">U</div>
+                    <div class="min-w-0 flex-1">
+                        <div id="user-display-name" class="text-xs font-medium truncate text-zinc-300">Sync Active</div>
+                        <div id="user-display-sub" class="text-[10px] text-zinc-500 truncate">authenticating</div>
+                    </div>
                 </div>
+                <button onclick="triggerLogoutAction()" class="text-zinc-600 hover:text-zinc-400 p-1" title="Sign Out">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+                </button>
             </div>
         </aside>
 
-        <main class="flex-1 h-screen flex flex-col relative bg-zinc-900/20">
+        <main class="flex-1 h-screen flex flex-col relative bg-zinc-900/10">
             <div id="chat-viewport" class="flex-1 overflow-y-auto px-4 py-16">
                 <div id="intro-hero" class="max-w-2xl mx-auto text-left mt-24">
                     <h1 class="font-serif text-4xl tracking-tight mb-2 text-zinc-100 font-medium">Good to see you.</h1>
@@ -125,151 +131,24 @@
                 <div class="max-w-2xl mx-auto bg-zinc-900 border border-zinc-800 rounded-2xl p-2 shadow-xl focus-within:border-zinc-700 transition-colors">
                     <textarea id="chat-textarea" rows="1" placeholder="Message Quill..." class="w-full bg-transparent border-none resize-none outline-none px-3 py-1.5 text-sm text-zinc-200 h-10 min-h-[40px] max-h-[200px] focus:ring-0 placeholder-zinc-500"></textarea>
                     <div class="flex items-center justify-between px-2 pb-1 pt-1.5 border-t border-zinc-800/40 mt-1">
-                        <span class="text-[10px] text-zinc-500 font-mono tracking-wider">Llama 3.3 Engine Platform</span>
-                        <button onclick="submitUserQuery()" class="inline-flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-950 p-1.5 hover:bg-white transition-colors shadow">
+                        <span class="text-[10px] text-zinc-500 font-mono tracking-wider">Llama 3.3 Context Sync Mode</span>
+                        <button onclick="submitUserQuery()" class="inline-flex items-center justify-center rounded-lg bg-zinc-100 text-zinc-950 p-1.5 hover:bg-white transition-colors shadow shadow-black">
                             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 7-7 7 7"></path><path d="M12 5v14"></path></svg>
                         </button>
                     </div>
                 </div>
-                <div class="text-center text-[10px] text-zinc-600 mt-2">Quill can make mistakes. Consider checking important information.</div>
             </div>
         </main>
     </div>
 
     <script>
-        // A. ASYNC TASK: Ask Supabase to fire an SMS OTP text out to the user's cell phone
-async function requestSmsOtpToken() {
-    const phoneNumber = document.getElementById('auth-phone').value.trim();
-    const errorLog = document.getElementById('auth-error-log');
-    errorLog.classList.add('hidden');
+        // CONFIGURATION PARAMETERS - PLACE YOUR CREDENTIAL STRINGS HERE
+        const SUPABASE_URL = "https://lwriefilihpglrclbapm.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx3cmllZmlsaWhwZ2xyY2xiYXBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODIzODg3NTUsImV4cCI6MjA5Nzk2NDc1NX0.GZwl-a3GRzCA7xE2rRjCtRvxRMgous0RFJAxzEh1DiU";
+        const PRODUCTION_BACKEND_URL = "https://quill-backend-wk4m.onrender.com/chat";
 
-    if (!phoneNumber) {
-        errorLog.textContent = "Please enter a valid phone number.";
-        errorLog.classList.remove('hidden');
-        return;
-    }
-
-    const { data, error } = await supabase.auth.signInWithOtp({
-        phone: phoneNumber
-    });
-
-    if (error) {
-        errorLog.textContent = `SMS Pipeline Refusal: ${error.message}`;
-        errorLog.classList.remove('hidden');
-    } else {
-        // Text shipped successfully! Swap the UI input forms smoothly
-        document.getElementById('phone-input-step').classList.add('hidden');
-        document.getElementById('otp-verify-step').classList.remove('hidden');
-    }
-}
-
-// B. ASYNC TASK: Submit the 6-digit pin back to Supabase to verify the session
-async function verifySmsOtpToken() {
-    const phoneNumber = document.getElementById('auth-phone').value.trim();
-    const tokenCode = document.getElementById('auth-otp-token').value.trim();
-    const errorLog = document.getElementById('auth-error-log');
-    errorLog.classList.add('hidden');
-
-    if (tokenCode.length !== 6) {
-        errorLog.textContent = "Please enter the complete 6-digit pin code.";
-        errorLog.classList.remove('hidden');
-        return;
-    }
-
-    const { data: { session }, error } = await supabase.auth.verifyOtp({
-        phone: phoneNumber,
-        token: tokenCode,
-        type: 'sms' // Tells the verification engine to catch an SMS type event
-    });
-
-    if (error) {
-        errorLog.textContent = `Incorrect Code: ${error.message}`;
-        errorLog.classList.remove('hidden');
-    }
-    // Note: If successful, supabase.auth.onAuthStateChange handles wiping the splash overlay away!
-}
-
-// Helper UI navigation rollback task
-function changePhoneNumberBack() {
-    document.getElementById('otp-verify-step').classList.add('hidden');
-    document.getElementById('phone-input-step').classList.remove('hidden');
-}
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
-        // TRIGGER OAUTH REDIRECT PIPELINES VIA SUPABASE
-async function handleSocialLogin(providerName) {
-    const errorLog = document.getElementById('auth-error-log');
-    
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: providerName,
-        options: {
-            // Tells the OAuth screen where to return the user after successful login
-            redirectTo: window.location.origin 
-        }
-    });
-
-    if (error) {
-        errorLog.textContent = `OAuth Connection Error: ${error.message}`;
-        errorLog.classList.remove('hidden');
-    }
-}
-        
-        // Replace these strings with your actual keys from your Supabase Dashboard
-const SUPABASE_URL = "https://your-project-id.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_x7TlrGJMddkZIxhqBv3g1w_MEC4JeMe";
-
-// Establish your cloud database client instance connection
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// MONITOR USER LOGINS: Listen for state changes (logged in or logged out)
-supabase.auth.onAuthStateChange((event, session) => {
-    const authOverlay = document.getElementById('auth-guard-overlay');
-    if (session) {
-        // User logged in successfully! Remove the overlay view restriction
-        authOverlay.classList.add('hidden');
-        // Update dashboard profiles dynamically based on account traits
-        document.querySelector('.text-zinc-300').textContent = session.user.email.split('@')[0];
-        document.querySelector('.text-\\[10px\\]').textContent = session.user.email;
-        renderSidebarChatList(); // Pull user's specific past logs down from Supabase
-    } else {
-        // No session token located? Trigger login block views immediately
-        authOverlay.classList.remove('hidden');
-    }
-});
-
-// ACCOUNT ACCOUNT SIGN UP MANAGEMENT
-async function handleAccountRegistration() {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    const errorLog = document.getElementById('auth-error-log');
-
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) {
-        errorLog.textContent = error.message;
-        errorLog.classList.remove('hidden');
-    } else {
-        alert("Verification link sent! Check your inbox to confirm your email.");
-    }
-}
-
-// MANAGEMENT OF RETURNING USER SIGN-INS
-async function handleAccountLogin() {
-    const email = document.getElementById('auth-email').value.trim();
-    const password = document.getElementById('auth-password').value.trim();
-    const errorLog = document.getElementById('auth-error-log');
-
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) {
-        errorLog.textContent = error.message;
-        errorLog.classList.remove('hidden');
-    }
-}
-
-// LOGOUT MANAGEMENT INTERFACE
-async function triggerLogoutAction() {
-    await supabase.auth.signOut();
-    window.location.reload();
-}
-
         const inputArea = document.getElementById('chat-textarea');
         const stream = document.getElementById('message-stream');
         const heroSection = document.getElementById('intro-hero');
@@ -277,203 +156,279 @@ async function triggerLogoutAction() {
         const modal = document.getElementById('delete-modal');
         let currentChatId = null;
 
-        window.onload = () => { renderSidebarChatList(); startNewChatWindow(); };
-        inputArea.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitUserQuery(); } });
+        window.onload = () => {
+            detectUserCountryCode();
+            startNewChatWindow();
+        };
 
-        function startNewChatWindow() {
-            currentChatId = 'chat-' + Date.now();
-            stream.innerHTML = '';
-            stream.classList.add('hidden');
-            heroSection.classList.remove('hidden');
-            inputArea.value = '';
-            renderSidebarChatList();
+        inputArea.addEventListener('keydown', (e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                submitUserQuery(); 
+            } 
+        });
+
+        // RE-IDENTITY WATCHER HANDLER
+        supabase.auth.onAuthStateChange((event, session) => {
+            const authOverlay = document.getElementById('auth-guard-overlay');
+            if (session) {
+                authOverlay.classList.add('hidden');
+                const userIdentifier = session.user.email || session.user.phone || "User Account";
+                document.getElementById('user-display-name').textContent = userIdentifier.split('@')[0];
+                document.getElementById('user-display-sub').textContent = userIdentifier;
+                renderSidebarChatList();
+            } else {
+                authOverlay.classList.remove('hidden');
+            }
+        });
+
+        // IP-BASED LOCATION AUTOMATION CONTROLLER
+        async function detectUserCountryCode() {
+            const phoneInput = document.getElementById('auth-phone');
+            const statusText = document.getElementById('location-status');
+            const dot = document.getElementById('location-dot');
+            try {
+                const res = await fetch('https://ipapi.co/json/');
+                const data = await res.json();
+                if (data && data.country_calling_code) {
+                    phoneInput.value = data.country_calling_code;
+                    dot.classList.remove('bg-zinc-700', 'animate-pulse');
+                    dot.classList.add('bg-emerald-500');
+                    statusText.textContent = `Auto-detected location: ${data.country_name} (${data.country_calling_code})`;
+                } else { fallbackLocationUI(); }
+            } catch { fallbackLocationUI(); }
         }
 
-        function getVault() { return JSON.parse(localStorage.getItem('quill_vault') || '{}'); }
-        function saveVault(db) { localStorage.setItem('quill_vault', JSON.stringify(db)); renderSidebarChatList(); }
+        function fallbackLocationUI() {
+            document.getElementById('auth-phone').value = "+";
+            document.getElementById('location-dot').className = "h-2 w-2 rounded-full bg-amber-500";
+            document.getElementById('location-status').textContent = "Provide your phone country calling index code manually.";
+        }
 
-        // MODERN MODAL OVERLAYS
+        // SOCIAL OAUTH TRIGGER CORE
+        async function handleSocialLogin(providerName) {
+            await supabase.auth.signInWithOAuth({
+                provider: providerName,
+                options: { redirectTo: window.location.origin }
+            });
+        }
+
+        // TWILIO SMS GENERATOR PIPELINES
+        async function requestSmsOtpToken() {
+            const num = document.getElementById('auth-phone').value.trim();
+            const log = document.getElementById('auth-error-log');
+            log.classList.add('hidden');
+            if(!num) { log.textContent = "Please fill out your target phone digits."; log.classList.remove('hidden'); return; }
+
+            const { error } = await supabase.auth.signInWithOtp({ phone: num });
+            if (error) { log.textContent = error.message; log.classList.remove('hidden'); }
+            else {
+                document.getElementById('phone-input-step').classList.add('hidden');
+                document.getElementById('otp-verify-step').classList.remove('hidden');
+            }
+        }
+
+        async function verifySmsOtpToken() {
+            const num = document.getElementById('auth-phone').value.trim();
+            const token = document.getElementById('auth-otp-token').value.trim();
+            const log = document.getElementById('auth-error-log');
+            log.classList.add('hidden');
+
+            const { error } = await supabase.auth.verifyOtp({ phone: num, token: token, type: 'sms' });
+            if (error) { log.textContent = error.message; log.classList.remove('hidden'); }
+        }
+
+        function changePhoneNumberBack() {
+            document.getElementById('otp-verify-step').classList.add('hidden');
+            document.getElementById('phone-input-step').classList.remove('hidden');
+        }
+
+        async function triggerLogoutAction() {
+            await supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        // MODAL BOX ANIMATION WINDOW OVERLAYS
         function openConfirmationModal(confirmAction) {
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
             setTimeout(() => { modal.classList.remove('opacity-0'); modal.querySelector('div').classList.remove('scale-95'); }, 10);
             document.getElementById('modal-confirm-btn').onclick = () => { confirmAction(); closeConfirmationModal(); };
         }
 
+         Gentile layout close transitions
         function closeConfirmationModal() {
-            modal.classList.add('opacity-0');
-            modal.querySelector('div').classList.add('scale-95');
+            modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
         }
 
+        function startNewChatWindow() {
+            currentChatId = 'room-' + Date.now();
+            stream.innerHTML = ''; stream.classList.add('hidden');
+            heroSection.classList.remove('hidden'); inputArea.value = '';
+            renderSidebarChatList();
+        }
+
+        // CLOUD OPERATIONS PIPELINES CONTROLLERS
         async function renderSidebarChatList() {
-    sidebarList.innerHTML = '';
-    const user = (await supabase.auth.getUser()).data.user;
-    if (!user) return;
+            sidebarList.innerHTML = '';
+            const user = (await supabase.auth.getUser()).data.user;
+            if (!user) return;
 
-    // Grab chat rooms belonging ONLY to this specific authenticated user ID
-    const { data: sessions, error } = await supabase
-        .from('chat_sessions')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+            const { data: sessions } = await supabase.from('chat_sessions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+            if (!sessions || sessions.length === 0) {
+                sidebarList.innerHTML = `<p class="text-[11px] text-zinc-600 italic p-3">No conversations saved.</p>`; return;
+            }
 
-    if (!sessions || sessions.length === 0) {
-        sidebarList.innerHTML = `<p class="text-[11px] text-zinc-600 italic p-3">No conversations logged.</p>`;
-        return;
-    }
+            sessions.forEach(session => {
+                const displayTitle = session.title.length > 22 ? session.title.substring(0, 22) + '...' : session.title;
+                const activeStyle = session.id === currentChatId ? 'bg-zinc-900 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-zinc-900/60';
 
-    sessions.forEach(session => {
-        const displayTitle = session.title.length > 22 ? session.title.substring(0, 22) + '...' : session.title;
-        const activeStyle = session.id === currentChatId ? 'bg-zinc-900 text-zinc-100 font-medium' : 'text-zinc-400 hover:bg-zinc-900/60';
-
-        sidebarList.innerHTML += `
-            <div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}">
-                <button onclick="loadTargetChatSession('${session.id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">
-                    ${displayTitle}
-                </button>
-                <button onclick="deleteSingleChatSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
-                </button>
-            </div>`;
-    });
-}
-
-        function triggerSidebarDelete(event, id) {
-            event.stopPropagation();
-            openConfirmationModal(() => {
-                const db = getVault();
-                delete db[id];
-                saveVault(db);
-                if (currentChatId === id) startNewChatWindow();
+                sidebarList.innerHTML += `
+                    <div class="group flex items-center justify-between rounded-lg px-2 py-2 text-xs transition-all ${activeStyle}">
+                        <button onclick="loadTargetChatSession('${session.id}')" class="text-left font-sans truncate flex-1 block overflow-hidden pr-2">
+                            ${displayTitle}
+                        </button>
+                        <button onclick="deleteSingleChatSession(event, '${session.id}')" class="opacity-0 group-hover:opacity-100 p-1 text-zinc-500 hover:text-zinc-200 rounded transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                        </button>
+                    </div>`;
             });
         }
 
         async function loadTargetChatSession(sessionId) {
-    currentChatId = sessionId;
-    stream.innerHTML = '';
-    heroSection.classList.add('hidden');
-    stream.classList.remove('hidden');
+            currentChatId = sessionId;
+            stream.innerHTML = ''; heroSection.classList.add('hidden'); stream.classList.remove('hidden');
 
-    const { data: messages } = await supabase
-        .from('chat_messages')
-        .select('*')
-        .eq('session_id', sessionId)
-        .order('created_at', { ascending: true });
-
-    if (messages) {
-        messages.forEach(msg => appendMessageDOM(msg.sender, msg.text, msg.id));
-    }
-    renderSidebarChatList();
-    document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
-}
+            const { data: messages } = await supabase.from('chat_messages').select('*').eq('session_id', sessionId).order('created_at', { ascending: true });
+            if (messages) messages.forEach(msg => appendMessageDOM(msg.sender, msg.text, msg.id));
+            renderSidebarChatList();
+            document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
+        }
 
         async function appendMessageToCloudDatabase(sender, text) {
-    const user = (await supabase.auth.getUser()).data.user;
-    
-    // Create a new session row if this is the first message of a conversation
-    if (sender === 'user') {
-        const { data: existingSession } = await supabase.from('chat_sessions').select('*').eq('id', currentChatId).single();
-        if (!existingSession) {
-            await supabase.from('chat_sessions').insert({ id: currentChatId, user_id: user.id, title: text });
+            const user = (await supabase.auth.getUser()).data.user;
+            if (sender === 'user') {
+                const { data: hasSession } = await supabase.from('chat_sessions').select('*').eq('id', currentChatId).maybeSingle();
+                if (!hasSession) await supabase.from('chat_sessions').insert({ id: currentChatId, user_id: user.id, title: text });
+            }
+            const { data: msgRow } = await supabase.from('chat_messages').insert({ session_id: currentChatId, user_id: user.id, sender: sender, text: text }).select().single();
+            return msgRow ? msgRow.id : 'fallback-' + Date.now();
         }
-    }
 
-    const newMsgId = 'msg-' + Date.now(); // Optional local id, database auto-generates uuid
-    const { data: insertedMsg } = await supabase.from('chat_messages').insert({
-        session_id: currentChatId,
-        user_id: user.id,
-        sender: sender,
-        text: text
-    }).select().single();
-
-    return insertedMsg ? insertedMsg.id : newMsgId;
-}
+        async function deleteSingleChatSession(event, sessionId) {
+            event.stopPropagation();
+            openConfirmationModal(async () => {
+                await supabase.from('chat_sessions').delete().eq('id', sessionId);
+                startNewChatWindow();
+            });
+        }
 
         async function triggerBubbleDelete(msgId) {
-    openConfirmationModal(async () => {
-        await supabase.from('chat_messages').delete().eq('id', msgId);
-        loadTargetChatSession(currentChatId);
-    });
-}
+            openConfirmationModal(async () => {
+                await supabase.from('chat_messages').delete().eq('id', msgId);
+                loadTargetChatSession(currentChatId);
+            });
+        }
 
-        function editMessageInline(msgId) {
-            const currentBody = document.getElementById(`body-${msgId}`) || document.querySelector(`#container-${msgId} .bg-zinc-800`);
-            const originalText = currentBody.textContent;
+        async function editMessageInline(msgId) {
+            const currentContainer = document.querySelector(`#container-${msgId} .whitespace-pre-wrap`);
+            const originalText = currentContainer.textContent;
             const newText = prompt("Edit your prompt:", originalText);
             if (newText && newText.trim() !== originalText) {
-                const db = getVault();
-                const index = db[currentChatId].findIndex(m => m.id === msgId);
-                if (index !== -1) {
-                    db[currentChatId][index].text = newText;
-                    db[currentChatId] = db[currentChatId].slice(0, index + 1);
-                    saveVault(db);
-                    loadTargetChatSession(currentChatId);
-                    
-                    inputArea.value = newText;
-                    submitUserQuery(true); 
-                }
+                // Wipe downstream messages following this edited index
+                await supabase.from('chat_messages').delete().eq('session_id', currentChatId).gt('id', msgId);
+                await supabase.from('chat_messages').update({ text: newText }).eq('id', msgId);
+                loadTargetChatSession(currentChatId);
+                
+                inputArea.value = newText;
+                submitUserQuery(true);
             }
         }
 
-        async function submitUserQuery(isEditTrigger = false) {
-    const query = isEditTrigger ? inputArea.value : inputArea.value.trim();
-    if (!query) return;
-
-    heroSection.classList.add('hidden');
-    stream.classList.remove('hidden');
-
-    const userMsgId = 'msg-' + Date.now();
-    if (!isEditTrigger) {
-        appendMessageDOM('user', query, userMsgId);
-        const db = getVault();
-        if (!db[currentChatId]) db[currentChatId] = [];
-        db[currentChatId].push({ id: userMsgId, sender: 'user', text: query });
-        saveVault(db);
-        inputArea.value = '';
-    }
-
-    const aiMsgId = 'msg-ai-' + Date.now();
-    appendMessageDOM('ai', '', aiMsgId);
-    const responseTextElement = document.getElementById(`body-${aiMsgId}`);
-    let fullAiResponse = "";
-
-    try {
-        // MEMORY INJECTION ENGINE: Gather previous logs under this Chat ID
-        const db = getVault();
-        const activeConversationLog = db[currentChatId] || [];
-        
-        // Translate local logs into the specific standard roles NVIDIA expects ("user" and "assistant")
-        const formattedHistoryPayload = activeConversationLog.map(msg => ({
-            role: msg.sender === 'user' ? 'user' : 'assistant',
-            content: msg.text
-        }));
-
-        const response = await fetch('https://quill-backend-wk4m.onrender.com', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ messages: formattedHistoryPayload }) // Sending the full thread array!
-        });
-
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder();
-
-        while (true) {
-            const { value, done } = await reader.read();
-            if (done) break;
-            fullAiResponse += decoder.decode(value, { stream: true });
-            responseTextElement.textContent = fullAiResponse;
+        function appendMessageDOM(sender, text, msgId) {
+            const isUser = sender === 'user';
+            if (isUser) {
+                stream.innerHTML += `
+                    <div class="flex items-start gap-4 justify-end message-bubble w-full group" id="container-${msgId}">
+                        <div class="flex flex-col items-end max-w-[85%]">
+                            <div class="bg-zinc-800 text-zinc-100 px-4 py-2.5 rounded-2xl border border-zinc-700/30 text-[13px] leading-relaxed whitespace-pre-wrap">${text}</div>
+                            <div class="action-trigger opacity-0 flex gap-2.5 text-[11px] text-zinc-500 mt-1.5 transition-opacity duration-150 px-1">
+                                <button onclick="editMessageInline('${msgId}')" class="hover:text-zinc-300 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Edit</button>
+                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+            } else {
+                stream.innerHTML += `
+                    <div class="flex items-start gap-3 justify-start message-bubble w-full group" id="container-${msgId}">
+                        <div class="h-6 w-6 rounded-full bg-zinc-800 text-[10px] text-zinc-400 flex items-center justify-center font-bold shrink-0 mt-0.5 border border-zinc-700/40">AI</div>
+                        <div class="flex flex-col max-w-[85%]">
+                            <div class="text-zinc-200 text-[13px] leading-relaxed whitespace-pre-wrap pt-0.5" id="body-${msgId}">${text}</div>
+                            <div class="action-trigger opacity-0 flex gap-2 text-[11px] text-zinc-500 mt-2 transition-opacity duration-150">
+                                <button onclick="triggerBubbleDelete('${msgId}')" class="hover:text-red-400 flex items-center gap-1"><svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/></svg> Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+            }
         }
 
-        // Commit the finalized response to the vault
-        const updatedDb = getVault();
-        updatedDb[currentChatId].push({ id: aiMsgId, sender: 'ai', text: fullAiResponse });
-        saveVault(updatedDb);
+        // FULL STREAMING PROCESSING ENGINE LINK WITH MEMORY CORES INJECTIONS
+        async function submitUserQuery(isEditTrigger = false) {
+            const query = isEditTrigger ? inputArea.value : inputArea.value.trim();
+            if (!query) return;
 
-    } catch (err) {
-        responseTextElement.innerHTML = `<span class="text-red-400 font-medium">Link broke during streaming ingestion execution.</span>`;
-    }
-}
+            heroSection.classList.add('hidden'); stream.classList.remove('hidden');
+
+            if (!isEditTrigger) {
+                const localUserMsgId = 'temp-user-' + Date.now();
+                appendMessageDOM('user', query, localUserMsgId);
+                await appendMessageToCloudDatabase('user', query);
+                inputArea.value = '';
+            }
+
+            const localAiMsgId = 'temp-ai-' + Date.now();
+            appendMessageDOM('ai', '', localAiMsgId);
+            const responseTextElement = document.getElementById(`body-${localAiMsgId}`);
+            let fullAiResponse = "";
+
+            try {
+                // Fetch latest records sequence from database storage to feed as raw context history
+                const { data: logs } = await supabase.from('chat_messages').select('sender, text').eq('session_id', currentChatId).order('created_at', { ascending: true });
+                
+                // Establish strict brevity guidelines in the instruction set
+                const historyPayload = [{ role: "system", content: "You are a concise AI assistant. Respond in 2-3 sentences max. Be direct and avoid general filler prose." }];
+                
+                if (logs) {
+                    logs.forEach(log => {
+                        historyPayload.push({ role: log.sender === 'user' ? 'user' : 'assistant', content: log.text });
+                    });
+                }
+
+                const response = await fetch(PRODUCTION_BACKEND_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: historyPayload })
+                });
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    fullAiResponse += decoder.decode(value, { stream: true });
+                    responseTextElement.textContent = fullAiResponse;
+                    document.getElementById('chat-viewport').scrollTop = document.getElementById('chat-viewport').scrollHeight;
+                }
+
+                // Append the completed streaming statement string block safely to Supabase
+                await appendMessageToCloudDatabase('ai', fullAiResponse);
+                loadTargetChatSession(currentChatId); // Reload to lock native DB IDs onto bubbles
+
+            } catch (err) {
+                responseTextElement.innerHTML = `<span class="text-red-400 font-medium">Link broke during connection ingestion pipeline loop.</span>`;
+            }
+        }
     </script>
 </body>
 </html>
