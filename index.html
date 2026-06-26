@@ -182,22 +182,46 @@
             }
         });
 
-        // IP-BASED LOCATION AUTOMATION CONTROLLER
-        async function detectUserCountryCode() {
-            const phoneInput = document.getElementById('auth-phone');
-            const statusText = document.getElementById('location-status');
-            const dot = document.getElementById('location-dot');
-            try {
-                const res = await fetch('https://ipapi.co/json/');
-                const data = await res.json();
-                if (data && data.country_calling_code) {
-                    phoneInput.value = data.country_calling_code;
-                    dot.classList.remove('bg-zinc-700', 'animate-pulse');
-                    dot.classList.add('bg-emerald-500');
-                    statusText.textContent = `Auto-detected location: ${data.country_name} (${data.country_calling_code})`;
-                } else { fallbackLocationUI(); }
-            } catch { fallbackLocationUI(); }
+        // UPGRADED BULLETPROOF AUTO-LOCATION ENGINE
+async function detectUserCountryCode() {
+    const phoneInput = document.getElementById('auth-phone');
+    const statusText = document.getElementById('location-status');
+    const dot = document.getElementById('location-dot');
+
+    // List of reliable backup geolocation endpoints
+    const apiEndpoints = [
+        'https://ipapi.co/json/',
+        'https://ip-api.com/json/?fields=status,country,countryCode,callingCode'
+    ];
+
+    for (let url of apiEndpoints) {
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            // Extract the calling code depending on which api responded first
+            let dialCode = data.country_calling_code || (data.callingCode ? '+' + data.callingCode : null);
+            let countryName = data.country_name || data.country;
+
+            if (dialCode) {
+                phoneInput.value = dialCode;
+                
+                // Update indicator lights to green
+                dot.className = "h-2 w-2 rounded-full bg-emerald-500";
+                statusText.textContent = `Auto-detected location: ${countryName} (${dialCode})`;
+                return; // Code successfully injected, exit the loop!
+            }
+        } catch (err) {
+            console.log(`Failed fetching from ${url}, trying backup...`);
+            continue; // Fall through to the next backup link if blocked
         }
+    }
+
+    // Ultimate fail-safe if all networks block the third-party requests
+    phoneInput.value = "+"; 
+    dot.className = "h-2 w-2 rounded-full bg-amber-500";
+    statusText.textContent = "Location blocked. Please enter your country code manually.";
+}
 
         function fallbackLocationUI() {
             document.getElementById('auth-phone').value = "+";
@@ -255,7 +279,7 @@
             document.getElementById('modal-confirm-btn').onclick = () => { confirmAction(); closeConfirmationModal(); };
         }
 
-         Gentile layout close transitions
+         //Gentile layout close transitions
         function closeConfirmationModal() {
             modal.classList.add('opacity-0'); modal.querySelector('div').classList.add('scale-95');
             setTimeout(() => { modal.classList.add('hidden'); modal.classList.remove('flex'); }, 200);
